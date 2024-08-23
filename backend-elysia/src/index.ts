@@ -120,27 +120,32 @@ app.guard(
 
 // ---------------- User Register API ---------------- //
 
-app.post("/register", async ({ body }) => {
-    try {
-      let userData: any = body;
-      userData.password = await Bun.password.hash(userData.password, {
-        algorithm: "bcrypt",
-        cost: 4,
-      });
-      createUser(userData.email, userData.password);
-      return { message: "created successfully" };
-    } catch (error) {
+app.post("/register", async ({ body, set }) => {
+  try {
+    let userData: any = body;
+    userData.password = await Bun.password.hash(userData.password, {
+      algorithm: "bcrypt",
+      cost: 4,
+    });
+    await createUser(userData.email, userData.password);
+    return { message: "Created successfully" };
+  } catch (error) {
+    if (error.message === "User already exists") {
+      set.status = 409;
+      return { message: "User already exists"};
+    } else {
       set.status = 500;
-      return { message: "error", error };
+      return { message: "Internal Server Error", error: error.message };
     }
-  },
-  {
-    body: t.Object({
-      email: t.String(),
-      password: t.String(),
-    }),
   }
-);
+},
+{
+  body: t.Object({
+    email: t.String(),
+    password: t.String(),
+  }),
+});
+
 
 // ---------------- User Login API ---------------- //
 

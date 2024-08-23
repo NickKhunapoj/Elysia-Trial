@@ -69,13 +69,23 @@ const deleteBook = (id: number) => {
 
 // Users
 
-const createUser = (email: string, password: string) => {
+const createUser = async(email: string, password: string) => {
   try {
+
+    const existingUserQuery = db.query(
+      "select * from users where email = $email;"
+    );
+    const existingUser = await existingUserQuery.get({ $email: email });
+    if (existingUser) {
+      throw new Error("User already exists");
+    }
+
     const query = db.query(
       "insert into users (email, password) values ($email, $password);"
     );
     return query.run({ $email: email, $password: password });
   } catch (error) {
+    throw error;
     console.log("error", error);
   }
 };
